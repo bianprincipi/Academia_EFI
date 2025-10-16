@@ -1,32 +1,30 @@
 'use strict';
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
+const { auth } = require('../middlewares/auth');
+const { permit } = require('../middlewares/roles');
+const ctrl = require('../controllers/users.controller');
 
-// Intentamos cargar el middleware de distintas formas posibles
-let mw = null;
-try {
-  const mod = require('../middlewares/auth'); // ajusta a tu ruta real si difiere
-  mw = (typeof mod === 'function')
-    ? mod
-    : (typeof mod?.auth === 'function')
-      ? mod.auth
-      : (typeof mod?.default === 'function')
-        ? mod.default
-        : null;
-} catch (e) {
-  console.error('No se pudo cargar ../middlewares/auth:', e.message);
-}
+// RUTAS PÚBLICAS
 
-const auth = mw || ((req, res, next) => {
-  console.warn('⚠️  Middleware auth no encontrado. Continuando sin validar (solo para desarrollo).');
-  next();
-});
+// GET /users/me - Obtener perfil del usuario autenticado
+router.get('/me', auth, ctrl.me);
 
-// GET /users/me  -> devuelve el usuario del token (o placeholder si no hay auth real)
-router.get('/me', auth, (req, res) => {
-  if (!req.user) {
-    return res.json({ id: null, role: 'guest' });
-  }
-  res.json({ id: req.user.id, role: req.user.role, email: req.user.email });
-});
+// RUTAS PROTEGIDAS (solo admin)
+
+// GET /users - Listar todos los usuarios (solo admin)
+router.get('/', auth, permit('admin'), ctrl.list);
+
+// POST /users - Crear nuevo usuario (solo admin)
+router.post('/', auth, permit('admin'), ctrl.create);
+
+// PUT /users/:id - Actualizar usuario (solo admin)
+router.put('/:id', auth, permit('admin'), ctrl.update);
+
+// DELETE /users/:id - Eliminar usuario (solo admin)
+router.delete('/:id', auth, permit('admin'), ctrl.remove);
+
+// PUT /users/:id/change-password - Cambiar contraseña (cualquier usuario autenticado)
+router.put('/:id/change-password', auth, ctrl.changePassword);
 
 module.exports = router;

@@ -23,31 +23,38 @@ fs
     db[model.name] = model;
   });
 
-// Asociaciones
+// ASOCIACIONES
+
 const { User, Subject, Class, Enrollment, PasswordReset } = db;
 
+// User asociaciones
 if (User) {
   User.hasMany(Class, { foreignKey: 'teacherId', as: 'teaching' });
   User.hasMany(Enrollment, { foreignKey: 'userId' });
+  User.hasMany(PasswordReset, { foreignKey: 'userId' });
 }
 
+// Subject asociaciones
 if (Subject) {
   Subject.hasMany(Class, { foreignKey: 'subjectId' });
 }
 
+// Class asociaciones
 if (Class) {
   Class.belongsTo(Subject, { foreignKey: 'subjectId' });
   Class.belongsTo(User, { as: 'teacher', foreignKey: 'teacherId' });
   Class.hasMany(Enrollment, { foreignKey: 'classId' });
 }
 
+// Enrollment asociaciones
 if (Enrollment) {
   Enrollment.belongsTo(User, { foreignKey: 'userId' });
   Enrollment.belongsTo(Class, { foreignKey: 'classId' });
 }
 
+// PasswordReset asociaciones
 if (PasswordReset) {
-  PasswordReset.belongsTo(User, { foreignKey: 'userId' });
+  PasswordReset.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 }
 
 db.sequelize = sequelize;
