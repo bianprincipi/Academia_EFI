@@ -1,32 +1,62 @@
-'use strict';
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcrypt');
+const auth = require('../middlewares/auth');
+const checkRole = require('../middlewares/checkRole');
 
-// Intentamos cargar el middleware de distintas formas posibles
-let mw = null;
-try {
-  const mod = require('../middlewares/auth'); // ajusta a tu ruta real si difiere
-  mw = (typeof mod === 'function')
-    ? mod
-    : (typeof mod?.auth === 'function')
-      ? mod.auth
-      : (typeof mod?.default === 'function')
-        ? mod.default
-        : null;
-} catch (e) {
-  console.error('No se pudo cargar ../middlewares/auth:', e.message);
-}
+// IMPORTAMOS LOS MODELOS DESDE ./models/index.js
+const path = require('path');
+const db = require(path.join(__dirname, '../models/index.js'));
+const { User } = db;
 
-const auth = mw || ((req, res, next) => {
-  console.warn('⚠️  Middleware auth no encontrado. Continuando sin validar (solo para desarrollo).');
-  next();
+// POST /users/register
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: 'El correo ya está registrado' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hash,
+      role: role || 'estudiante',
+      is_active: true,
+    });
+
+    return res.status(201).json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (err) {
+    console.error('ERROR AL REGISTRAR USUARIO:', err);
+    return res.status(400).json({ message: err.message });
+  }
 });
 
-// GET /users/me  -> devuelve el usuario del token (o placeholder si no hay auth real)
-router.get('/me', auth, (req, res) => {
-  if (!req.user) {
-    return res.json({ id: null, role: 'guest' });
+// GET /users/profile
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'name', 'email', 'role', 'is_active'],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    return res.json(user);
+  } catch (err) {
+    console.error('ERROR AL OBTENER PERFIL:', err);
+    return res.status(500).json({ message: 'Error al obtener perfil' });
   }
-  res.json({ id: req.user.id, role: req.user.role, email: req.user.email });
 });
 
 module.exports = router;
