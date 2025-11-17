@@ -1,5 +1,5 @@
 // import { BrowserRouter, Routes, Route } from 'react-router-dom';
-// import { AuthProvider } from './auth.jsx';
+// import { AuthProvider } from './context/AuthContext';
 
 // import Layout from './site/Layout.jsx';
 
@@ -67,7 +67,7 @@
 //   );
 // }
 import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
-import { AuthProvider } from "./auth.jsx";
+import { AuthProvider } from "./context/AuthContext";
 import {
   Box,
   AppBar,
@@ -103,6 +103,12 @@ import Subjects from "./pages/Subjects.jsx";
 import Classes from "./pages/Classes.jsx";
 import MyEnrollments from "./pages/MyEnrollments.jsx";
 import Forbidden from "./pages/Forbidden.jsx";
+
+import Login from "./pages/Login.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPassword.jsx";
+import ResetPasswordPage from "./pages/ResetPassword.jsx";
+
 
 function NotFound() {
   return (
@@ -321,6 +327,14 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Rutas públicas fuera del layout (login, etc.) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset/:token" element={<ResetPasswordPage />} />
+          <Route path="/forbidden" element={<Forbidden />} />
+
+          {/* Layout principal que renderiza <Outlet/> */}
           <Route path="/" element={<SiteLayout />}>
             {/* --- Páginas públicas --- */}
             <Route index element={<Inicio />} />
@@ -363,7 +377,7 @@ export default function App() {
               }
             />
 
-            {/* --- Página no encontrada --- */}
+            {/* Catch-all dentro del layout */}
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

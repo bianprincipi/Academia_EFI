@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button, Stack } from '@mui/material';
-import { useAuth } from '../auth.jsx';
+import { useAuth } from '../context/AuthContext';
 import { listClasses } from '../services/classes';
 import { enroll } from '../services/enrollments';
 import { pdfRoster } from '../services/reports';

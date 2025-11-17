@@ -1,16 +1,17 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../auth.jsx';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; 
 
-export default function PrivateRoute({ roles = [], children }) {
-  const { user } = useAuth();
+export default function PrivateRoute({ allowedRoles }) { 
+  const { isAuthenticated, checkRole } = useAuth();
+  const location = useLocation();
 
-  // si no hay sesión, al login del portal
-  if (!user) return <Navigate to="/portal" replace />;
-
-  // si hay restricción de rol y no cumple, a /app/forbidden
-  if (roles.length && !roles.includes(user.role)) {
-    return <Navigate to="/app/forbidden" replace />;
+  if (!isAuthenticated) { 
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return children;
+  if (allowedRoles && !checkRole(allowedRoles)) {
+    return <Navigate to="/forbidden" replace />; 
+  }
+
+  return <Outlet />;
 }

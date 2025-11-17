@@ -1,6 +1,6 @@
 import { Typography, Stack, Button, Paper } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth.jsx';
+import { useAuth } from '../context/AuthContext';
 
 export default function PortalHome(){
   const { user, logout } = useAuth();

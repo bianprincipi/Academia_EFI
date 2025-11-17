@@ -1,6 +1,6 @@
 // import { useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../auth.jsx';
+// import { useAuth } from '../context/AuthContext';
 // import Login from './Login.jsx';
 
 // export default function Portal(){
@@ -16,7 +16,7 @@
 // }
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth.jsx';
+import { useAuth } from '../context/AuthContext';
 import Login from './Login.jsx';
 import { Box, Typography, CircularProgress, Fade, Paper } from '@mui/material';
 

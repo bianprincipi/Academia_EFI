@@ -1,4 +1,4 @@
-import { useAuth } from '../auth.jsx';
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 // Opcional: Instala 'react-icons' (npm install react-icons) para íconos

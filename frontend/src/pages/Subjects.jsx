@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, Stack, Button, TextField } from '@mui/material';
-import { useAuth } from '../auth.jsx';
+import { useAuth } from '../context/AuthContext';
 import { listSubjects, createSubject, removeSubject } from '../services/subjects';
 
 export default function Subjects(){
