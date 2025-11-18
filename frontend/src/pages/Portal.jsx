@@ -1,95 +1,157 @@
-// import { useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../auth.jsx';
-// import Login from './Login.jsx';
-
-// export default function Portal(){
-//   const { user } = useAuth();
-//   const nav = useNavigate();
-
-//   useEffect(() => {
-//     if (user) nav('/portal/home', { replace: true });
-//   }, [user, nav]);
-
-//   if (!user) return <Login />;
-//   return null;
-// }
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth.jsx';
-import Login from './Login.jsx';
-import { Box, Typography, CircularProgress, Fade, Paper } from '@mui/material';
+// src/pages/Portal.jsx
+import { useState } from "react";
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Alert,
+} from "@mui/material";
+import { green, blueGrey } from "@mui/material/colors";
+import SchoolIcon from "@mui/icons-material/School";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth.jsx";
+import api from "../services/api";
 
 export default function Portal() {
-  const { user, loading } = useAuth(); // por si tu hook maneja estado de carga
+  const { login } = useAuth();
   const nav = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => nav('/portal/home', { replace: true }), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [user, nav]);
+  const [email, setEmail] = useState("estudiante@example.com"); // podés dejar un ej.
+  const [password, setPassword] = useState("123456");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // ⏳ Pantalla de carga breve mientras chequea sesión
-  if (loading) {
-    return (
-      <Box
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email || !password) {
+      setError("Completá email y contraseña");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await api.post("/auth/login", { email, password });
+      const token = res.data?.token;
+      if (!token) {
+        throw new Error("Respuesta inválida del servidor");
+      }
+      login(token);
+      nav("/portal/home", { replace: true });
+    } catch (err) {
+      console.error("Error login:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "No se pudo iniciar sesión";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: "70vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Paper
+        elevation={4}
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+          p: 4,
+          maxWidth: 420,
+          width: "100%",
+          borderRadius: 4,
+          border: `1px solid ${green[100]}`,
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(232, 245, 233, 0.98))",
         }}
       >
-        <CircularProgress size={50} />
-        <Typography variant="body1" sx={{ mt: 2, color: 'text.secondary' }}>
-          Verificando sesión...
-        </Typography>
-      </Box>
-    );
-  }
+        <Stack spacing={2}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "999px",
+                bgcolor: green[100],
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <SchoolIcon sx={{ color: green[700] }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Portal Académico
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Iniciá sesión para gestionar tus clases
+              </Typography>
+            </Box>
+          </Stack>
 
-  // 🧑‍💻 Si no hay usuario, mostrar login centrado
-  if (!user) {
-    return (
-      <Fade in timeout={700}>
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%)',
-            p: 2,
-          }}
-        >
-          <Paper
-            elevation={6}
-            sx={{
-              maxWidth: 400,
-              width: '100%',
-              borderRadius: 3,
-              p: 4,
-              textAlign: 'center',
-              backgroundColor: 'white',
-            }}
+          {error && (
+            <Alert severity="error" variant="outlined">
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Stack spacing={2}>
+              <TextField
+                size="small"
+                label="Correo institucional"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+              />
+              <TextField
+                size="small"
+                label="Contraseña"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+              />
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                startIcon={<LockOpenIcon />}
+                disabled={loading}
+                sx={{
+                  mt: 1,
+                  bgcolor: green[600],
+                  "&:hover": { bgcolor: green[800] },
+                }}
+              >
+                {loading ? "Ingresando..." : "Ingresar al portal"}
+              </Button>
+            </Stack>
+          </Box>
+
+          <Typography
+            variant="caption"
+            color={blueGrey[600]}
+            sx={{ textAlign: "center", mt: 1 }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-              Portal Universitario
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-              Iniciá sesión para acceder a tu cuenta
-            </Typography>
-            <Login />
-          </Paper>
-        </Box>
-      </Fade>
-    );
-  }
-
-  // 🚀 Si hay usuario, lo redirige automáticamente
-  return null;
+            Roles soportados: administrador, profesor y estudiante.
+          </Typography>
+        </Stack>
+      </Paper>
+    </Box>
+  );
 }

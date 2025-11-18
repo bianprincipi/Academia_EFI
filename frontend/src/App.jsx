@@ -94,9 +94,10 @@ import Extension from "./site/pages/Extension.jsx";
 import Noticias from "./site/pages/Noticias.jsx";
 import Ingresantes from "./site/pages/Ingresantes.jsx";
 import Contacto from "./site/pages/Contacto.jsx";
-
+import Careers from './pages/Careers';
 import Portal from "./pages/Portal.jsx";
 import PortalHome from "./pages/PortalHome.jsx";
+import MySchedule from './pages/MySchedule';
 
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import Subjects from "./pages/Subjects.jsx";
@@ -325,12 +326,15 @@ export default function App() {
             {/* --- Páginas públicas --- */}
             <Route index element={<Inicio />} />
             <Route path="universidad" element={<Universidad />} />
-            <Route path="carreras" element={<Carreras />} />
+            
             <Route path="investigacion" element={<Investigacion />} />
             <Route path="extension" element={<Extension />} />
             <Route path="noticias" element={<Noticias />} />
             <Route path="ingresantes" element={<Ingresantes />} />
             <Route path="contacto" element={<Contacto />} />
+            <Route path="/carreras" element={<Careers />} />
+            <Route path="/app/my-schedule" element={<MySchedule />} />
+
 
             {/* --- Portal --- */}
             <Route path="portal" element={<Portal />} />

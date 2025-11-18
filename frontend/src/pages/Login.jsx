@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Stack, Typography, Paper } from '@mui/material';
-import api from '../api';
+import api from '../services/api.js';
 import { useAuth } from '../auth.jsx';
 
 export default function Login(){
