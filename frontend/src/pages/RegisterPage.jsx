@@ -1,154 +1,122 @@
+// src/pages/auth/Register.jsx
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
-import toast from 'react-hot-toast';
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Stack,
-  MenuItem, 
-  Paper,
-  CircularProgress 
-} from '@mui/material';
+import { TextField, Button, Stack, Typography, Paper } from '@mui/material';
+// Importamos el hook y aseguramos la ruta correcta según tu estructura
+import { useAuth } from '../../context/authContextDefinition'; 
 
-const ROLES = [
-  { value: 'estudiante', label: 'Estudiante' },
-  { value: 'profesor', label: 'Profesor' },
-];
-
-export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    nombre: '',
-    correo: '',
-    contraseña: '',
-    rol: 'estudiante',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+export default function Register(){
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(''); 
+  const [success, setSuccess] = useState(''); // Estado para mensaje de éxito
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const navigate = useNavigate(); 
+  // Obtenemos la función 'register' del contexto
+  const { register, isAuth } = useAuth(); 
 
-  const handleSubmit = async (e) => {
+  // Si ya está autenticado, redirigimos a donde corresponda
+  if (isAuth) {
+    navigate('/dashboard', { replace: true });
+    return null;
+  }
+
+  const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (formData.contraseña.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
-      return;
+    setSuccess('');
+    
+    if (password !== confirmPassword) {
+      return setError('Las contraseñas no coinciden.');
     }
+    
+    // Aquí puedes añadir más validaciones (ej. formato de email)
 
     setLoading(true);
     try {
-      await api.post('/auth/register', formData);
+      // Creamos el objeto con los datos que necesita el backend
+      const userData = { name, email, password };
       
-      toast.success('Registro exitoso. ¡Inicia sesión para continuar!');
-      navigate('/login');
+      // Llamamos a la función 'register' del AuthContext
+      await register(userData); 
+
+      // Si el registro es exitoso:
+      setSuccess('¡Registro exitoso! Por favor, inicia sesión.');
+      // Opcional: Redirigir al Login después de un breve momento
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 2000);
       
     } catch (err) {
-      const msg = err.response?.data?.message || 'Error al registrar usuario.';
+      // Manejar errores de la API (ej. 409 Email ya existe)
+      const msg = err.response?.data?.message || 'Error al registrar usuario. Intente de nuevo.';
       setError(msg);
-      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Paper sx={{ mt: 5, p: 4 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Crear Cuenta
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-            <Stack spacing={2}>
-              
-              <TextField
-                required
-                fullWidth
-                label="Nombre Completo"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-              />
-              
-              <TextField
-                required
-                fullWidth
-                label="Correo Electrónico"
-                name="correo"
-                type="email"
-                value={formData.correo}
-                onChange={handleChange}
-              />
-              
-              <TextField
-                required
-                fullWidth
-                label="Contraseña"
-                name="contraseña" // Asegúrate que el nombre coincida con tu backend
-                type="password"
-                value={formData.contraseña}
-                onChange={handleChange}
-              />
-
-              <TextField
-                select
-                required
-                fullWidth
-                label="Rol"
-                name="rol"
-                value={formData.rol}
-                onChange={handleChange}
-              >
-                {ROLES.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            
-              {error && (
-                <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                  {error}
-                </Typography>
-              )}
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={loading}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Registrarse'}
-              </Button>
-            </Stack>
-          </Box>
-        </Box>
-        
-        <Box textAlign="center" sx={{ mt: 2 }}>
-          <Link to="/login" style={{ textDecoration: 'none' }}>
-            <Typography variant="body2">¿Ya tienes cuenta? Inicia Sesión</Typography>
-          </Link>
-        </Box>
-      </Paper>
-    </Container>
+    <Paper sx={{ maxWidth: 420, mx: 'auto', p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 2 }}>Crear cuenta</Typography>
+      
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
+          {error}
+        </Typography>
+      )}
+       {success && (
+        <Typography color="primary" variant="body2" sx={{ mb: 1 }}>
+          {success}
+        </Typography>
+      )}
+      
+      <form onSubmit={onSubmit}>
+        <Stack spacing={2}>
+          <TextField
+            label="Nombre Completo"
+            type="text"
+            value={name}
+            onChange={e=>setName(e.target.value)}
+            required
+          />
+          <TextField
+            label="Email"
+            type="email"
+            value={email}
+            onChange={e=>setEmail(e.target.value)}
+            required
+          />
+          <TextField
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={e=>setPassword(e.target.value)}
+            required
+          />
+          <TextField
+            label="Confirmar Contraseña"
+            type="password"
+            value={confirmPassword}
+            onChange={e=>setConfirmPassword(e.target.value)}
+            required
+          />
+          <Button type="submit" variant="contained" disabled={loading}>
+            {loading ? 'Registrando…' : 'Registrarse'}
+          </Button>
+        </Stack>
+      </form>
+      
+      <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <Typography variant="body2">¿Ya tienes cuenta? Inicia sesión</Typography>
+        </Link>
+      </Stack>
+    </Paper>
   );
 }

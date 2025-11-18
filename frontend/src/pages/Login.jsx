@@ -19,10 +19,10 @@ export default function Login(){
     
     setLoading(true);
     try {
-      const user = await login(email, password); 
+      const user = await login({ email, password }); 
 
       //REDIRECCIÓN BASADA EN ROL (Implementación de la lógica del proyecto)
-      switch (user.rol) { 
+      switch (user.role) { 
         case 'admin':
           navigate('/dashboard', { replace: true }); // O '/admin/dashboard'
           break;

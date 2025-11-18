@@ -1,43 +1,97 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; 
-import { reset } from '../services/auth';
-import toast from 'react-hot-toast';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+// src/pages/auth/ResetPassword.jsx
 
-export default function ResetPassword(){
-  const { token: urlToken } = useParams(); 
-  const [pass, setPass] = useState('');
+import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { TextField, Button, Stack, Typography, Paper } from '@mui/material';
+import { useAuth } from '../../context/authContextDefinition';
+
+export default function ResetPassword() {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); 
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  useEffect(()=>{
-    if (!urlToken) {
-        toast.error('Token de restablecimiento de contraseña no encontrado en la URL.');
-    }
-  },[urlToken]); 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token'); // Capturamos el token de la URL
 
-  const submit = async()=>{
-    if(!urlToken) return toast.error('Falta token en la URL'); 
-    if(!pass) return toast('Ingresá una nueva contraseña');
+  // Obtenemos la función 'resetPassword' del contexto
+  const { resetPassword } = useAuth(); 
+
+  // Si no hay token en la URL, mostramos un error o redirigimos
+  if (!token) {
+    return (
+      <Paper sx={{ maxWidth: 420, mx: 'auto', p: 3, textAlign: 'center' }}>
+        <Typography color="error">Token de restablecimiento no encontrado.</Typography>
+        <Button onClick={() => navigate('/forgot-password', { replace: true })} sx={{ mt: 2 }}>
+            Volver a solicitar enlace
+        </Button>
+      </Paper>
+    );
+  }
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
     
-    try{
-      setLoading(true);
-      await reset(urlToken, pass); 
-      toast.success('Contraseña actualizada. Ya podés iniciar sesión.');
-      navigate('/login'); 
-    }catch(e){
-      toast.error(e?.response?.data?.message || 'No se pudo actualizar. Token inválido o expirado.');
-    }finally{ setLoading(false); }
+    if (password !== confirmPassword) {
+      return setError('Las contraseñas no coinciden.');
+    }
+    if (password.length < 8) {
+      return setError('La contraseña debe tener al menos 8 caracteres.');
+    }
+
+    setLoading(true);
+    try {
+      // Llamamos a la función 'resetPassword' con el token y la nueva contraseña
+      await resetPassword(token, password);
+
+      setSuccess('Contraseña restablecida con éxito. Serás redirigido.');
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 3000);
+      
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Token inválido o expirado. Vuelve a solicitar el enlace.';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h5">Restablecer contraseña</Typography>
-      <TextField label="Nueva contraseña" type="password" value={pass} onChange={e=>setPass(e.target.value)} />
-      <Button variant="contained" onClick={submit} disabled={loading}>Actualizar</Button>
-    </Stack>
+    <Paper sx={{ maxWidth: 420, mx: 'auto', p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 2 }}>Establecer Nueva Contraseña</Typography>
+      
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mb: 1 }}>{error}</Typography>
+      )}
+      {success && (
+        <Typography color="success.main" variant="body2" sx={{ mb: 1 }}>{success}</Typography>
+      )}
+      
+      <form onSubmit={onSubmit}>
+        <Stack spacing={2}>
+          <TextField
+            label="Nueva Contraseña"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <TextField
+            label="Confirmar Nueva Contraseña"
+            type="password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            required
+          />
+          <Button type="submit" variant="contained" disabled={loading}>
+            {loading ? 'Restableciendo…' : 'Restablecer Contraseña'}
+          </Button>
+        </Stack>
+      </form>
+    </Paper>
   );
 }

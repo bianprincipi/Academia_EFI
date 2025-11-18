@@ -1,59 +1,59 @@
-// frontend/src/context/AuthContext.jsx
+// src/context/AuthContext.jsx (Archivo principal del Contexto/Provider)
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { login as loginService, forgot, reset } from '../services/auth'; 
-import { jwtDecode } from 'jwt-decode';
+import { useState, useEffect } from 'react';
+// IMPORTANTE: Importar las funciones individuales que creaste en el servicio
+import { 
+    login as authLogin, // Renombramos 'login' para evitar conflicto con la función del Provider
+    logout as authLogout, 
+    register as authRegister, 
+    forgotPassword as authForgotPassword 
+} from '../services/auth'; 
 
-const AuthContext = createContext();
+// Importa las definiciones desde el nuevo archivo:
+import { AuthContext } from './authContextDefinition'; 
+// El hook 'useAuth' no se usa dentro del Provider, por eso no lo importamos aquí.
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Contiene { id, nombre, rol, ... }
-  const [token, setToken] = useState(null);
-  const isAuthenticated = !!token;
+export const AuthProvider = ({ children }) => { 
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      try {
-        const decodedUser = jwtDecode(storedToken);
-        setToken(storedToken);
-        setUser(decodedUser);
-      } catch {
-        logout(); 
-      }
-    }
-  }, []);
-  
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    setToken(null);
-    window.location.href = '/login'; 
-  };
+    // 1. Lógica para cargar el usuario al iniciar la aplicación
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            // Se asume que el token también es válido, sino el interceptor lo limpiará en la primera petición.
+            setUser(JSON.parse(storedUser));
+        }
+        setLoading(false);
+    }, []);
 
-  const login = async (email, password) => {
-    const response = await loginService(email, password);
-    const newToken = response.token; 
+    // 2. Función de Login del Contexto
+    const login = async (credentials) => {
+        // Llama a la función del servicio y espera la respuesta
+        const { user: userData } = await authLogin(credentials.email, credentials.password);
+        setUser(userData);
+    };
+
+    // 3. Función de Logout del Contexto
+    const logout = () => {
+        authLogout(); // Llama al servicio para limpiar localStorage
+        setUser(null);
+    };
     
-    localStorage.setItem('token', newToken);
-    
-    const decodedUser = jwtDecode(newToken);
-    setToken(newToken);
-    setUser(decodedUser); 
+    // Objeto de valores que se provee a la aplicación
+    const contextValue = {
+        user,
+        isAuth: !!user, // Booleano que indica si el usuario está logueado
+        loading,
+        login,
+        logout,
+        register: authRegister,
+        forgotPassword: authForgotPassword,
+    };
 
-    return decodedUser;
-  };
-
-  const checkRole = (allowedRoles) => {
-    if (!user || !user.rol) return false;
-    return allowedRoles.includes(user.rol);
-  };
-
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, checkRole, forgot, reset }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
-
-export const useAuth = () => useContext(AuthContext);
