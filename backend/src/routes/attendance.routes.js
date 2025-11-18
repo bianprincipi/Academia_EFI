@@ -86,7 +86,8 @@ router.get(
         include: [
           {
             model: User,
-            as: 'student',
+            as: 'gradeStudent',
+
             attributes: ['id', 'name', 'email'],
           },
         ],

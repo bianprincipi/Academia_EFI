@@ -1,21 +1,20 @@
+// src/routes/users.routes.js
 const express = require('express');
 const router = express.Router();
+const { User } = require('../models');
 const bcrypt = require('bcrypt');
-const auth = require('../middlewares/auth');
-const checkRole = require('../middlewares/checkRole');
-
-// IMPORTAMOS LOS MODELOS DESDE ./models/index.js
-const path = require('path');
-const db = require(path.join(__dirname, '../models/index.js'));
-const { User } = db;
 
 // POST /users/register
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const existing = await User.findOne({ where: { email } });
-    if (existing) {
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    }
+
+    const exists = await User.findOne({ where: { email } });
+    if (exists) {
       return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
@@ -25,11 +24,10 @@ router.post('/register', async (req, res) => {
       name,
       email,
       password: hash,
-      role: role || 'estudiante',
-      is_active: true,
+      role,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       id: user.id,
       name: user.name,
       email: user.email,
@@ -37,25 +35,7 @@ router.post('/register', async (req, res) => {
     });
   } catch (err) {
     console.error('ERROR AL REGISTRAR USUARIO:', err);
-    return res.status(400).json({ message: err.message });
-  }
-});
-
-// GET /users/profile
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'email', 'role', 'is_active'],
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-
-    return res.json(user);
-  } catch (err) {
-    console.error('ERROR AL OBTENER PERFIL:', err);
-    return res.status(500).json({ message: 'Error al obtener perfil' });
+    res.status(500).json({ message: 'Error al registrar usuario' });
   }
 });
 

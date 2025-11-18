@@ -21,7 +21,7 @@ console.log('  DB_USER  =', DB_USER);
 console.log('  DB_HOST  =', DB_HOST);
 console.log('  DB_PORT  =', DB_PORT);
 
-// 🔌 Conexión directa a MySQL (sin config.js)
+// 🔌 Creamos la conexión DIRECTAMENTE
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   host: DB_HOST,
   port: DB_PORT,
@@ -29,17 +29,13 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   logging: false,
 });
 
-// 🚨 Probar conexión al arrancar
+// 🚨 Probar conexión
 sequelize
   .authenticate()
-  .then(() => {
-    console.log('✅ Conexión a MySQL OK');
-  })
-  .catch((err) => {
-    console.error('❌ Error al conectar a MySQL:', err.message);
-  });
+  .then(() => console.log('✅ Conexión a MySQL OK'))
+  .catch((err) => console.error('❌ Error al conectar a MySQL:', err.message));
 
-// 📦 Cargar todos los modelos .js excepto este index.js
+// Cargar modelos
 fs
   .readdirSync(__dirname)
   .filter(
@@ -53,93 +49,97 @@ fs
     db[model.name] = model;
   });
 
-// 📚 Asociaciones
-const { User, Subject, Class, Enrollment, PasswordReset, Grade, Attendance } = db;
+// Asociaciones
+const {
+  User,
+  Subject,
+  Class,
+  Enrollment,
+  PasswordReset,
+  Grade,
+  Attendance,
+  Career,
+} = db;
 
+/** USER **/
+if (User) {
+  // un profe tiene muchas clases
+  User.hasMany(Class, { foreignKey: 'teacherId', as: 'teaching' });
 
-if (User && Class) {
-  // Un profesor tiene muchas clases
-  User.hasMany(Class, {
-    foreignKey: 'teacherId',
-    as: 'teaching',
-  });
+  // un user tiene muchas inscripciones
+  User.hasMany(Enrollment, { foreignKey: 'userId', as: 'enrollments' });
 
-  // Un estudiante tiene muchas inscripciones
-  User.hasMany(Enrollment, {
-    foreignKey: 'userId',
-    as: 'enrollments',
-  });
+  // un user tiene muchas notas
+  if (Grade) {
+    User.hasMany(Grade, { foreignKey: 'userId', as: 'grades' });
+  }
+
+  // un user tiene mucha asistencia
+  if (Attendance) {
+    User.hasMany(Attendance, { foreignKey: 'userId', as: 'attendances' });
+  }
 }
 
-if (Subject && Class) {
-  // Una materia tiene muchas clases
-  Subject.hasMany(Class, {
-    foreignKey: 'subjectId',
-  });
+/** SUBJECT **/
+if (Subject) {
+  Subject.hasMany(Class, { foreignKey: 'subjectId', as: 'classes' });
 }
 
+/** CLASS **/
 if (Class) {
-  // Una clase pertenece a una materia
-  if (Subject) {
-    Class.belongsTo(Subject, {
-      foreignKey: 'subjectId',
-    });
+  Class.belongsTo(Subject, { foreignKey: 'subjectId', as: 'subject' });
+  Class.belongsTo(User, { foreignKey: 'teacherId', as: 'teacher' });
+
+  Class.hasMany(Enrollment, { foreignKey: 'classId', as: 'enrollments' });
+
+  if (Grade) {
+    Class.hasMany(Grade, { foreignKey: 'classId', as: 'grades' });
   }
 
-  // Una clase pertenece a un profesor
-  if (User) {
-    Class.belongsTo(User, {
-      as: 'teacher',
-      foreignKey: 'teacherId',
-    });
-  }
-
-  // Una clase tiene muchas inscripciones
-  if (Enrollment) {
-    Class.hasMany(Enrollment, {
-      foreignKey: 'classId',
-    });
+  if (Attendance) {
+    Class.hasMany(Attendance, { foreignKey: 'classId', as: 'attendances' });
   }
 }
 
+/** ENROLLMENT **/
 if (Enrollment) {
-  // Una inscripción pertenece a un estudiante
-  if (User) {
-    Enrollment.belongsTo(User, {
-      foreignKey: 'userId',
-      as: 'student',
-    });
-  }
-
-  // Una inscripción pertenece a una clase
-  if (Class) {
-    Enrollment.belongsTo(Class, {
-      foreignKey: 'classId',
-    });
-  }
+  Enrollment.belongsTo(User, { foreignKey: 'userId', as: 'student' });
+  Enrollment.belongsTo(Class, { foreignKey: 'classId', as: 'class' });
 }
 
-if (PasswordReset && User) {
-  PasswordReset.belongsTo(User, {
-    foreignKey: 'userId',
-  });
-}
-
+/** GRADE **/
 if (Grade) {
   Grade.belongsTo(User, { foreignKey: 'userId', as: 'student' });
-  Grade.belongsTo(Class, { foreignKey: 'classId' });
-
-  User.hasMany(Grade, { foreignKey: 'userId', as: 'grades' });
-  Class.hasMany(Grade, { foreignKey: 'classId', as: 'grades' });
+  Grade.belongsTo(Class, { foreignKey: 'classId', as: 'class' });
 }
+
+/** ATTENDANCE **/
 if (Attendance) {
   Attendance.belongsTo(User, { foreignKey: 'userId', as: 'student' });
-  Attendance.belongsTo(Class, { foreignKey: 'classId' });
-
-  User.hasMany(Attendance, { foreignKey: 'userId', as: 'attendances' });
-  Class.hasMany(Attendance, { foreignKey: 'classId', as: 'attendances' });
+  Attendance.belongsTo(Class, { foreignKey: 'classId', as: 'class' });
 }
 
+/** PASSWORD RESET **/
+if (PasswordReset) {
+  PasswordReset.belongsTo(User, { foreignKey: 'userId' });
+}
+
+/** CAREER <-> SUBJECT (many-to-many) **/
+if (Career && Subject) {
+  Career.belongsToMany(Subject, {
+    through: 'CareerSubjects',   // nombre de la tabla intermedia
+    foreignKey: 'careerId',
+    otherKey: 'subjectId',
+    as: 'subjects',
+  });
+
+  Subject.belongsToMany(Career, {
+    through: 'CareerSubjects',
+    foreignKey: 'subjectId',
+    otherKey: 'careerId',
+    as: 'careers',
+  });
+}
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

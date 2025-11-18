@@ -1,65 +1,110 @@
-// routes/reports.routes.js
+// src/routes/reports.routes.js
 const express = require('express');
-const PDFDocument = require('pdfkit');
 const router = express.Router();
-const auth = require('../middlewares/auth');
+const PDFDocument = require('pdfkit');
 const { Enrollment, Class, Subject, User } = require('../models');
+const auth = require('../middlewares/auth');
 
-// GET /reports/student-schedule/:id_usuario
-router.get('/student-schedule/:id_usuario', auth, async (req, res) => {
+router.get('/student-schedule/:id', auth, async (req, res) => {
   try {
-    const { id_usuario } = req.params;
+    const { id } = req.params;
+    const { format } = req.query;
 
-    // Solo admin o el mismo estudiante
-    if (req.user.role !== 'admin' && Number(id_usuario) !== req.user.id) {
-      return res.status(403).json({ message: 'No puedes ver el horario de otro estudiante' });
+    if (req.user.role === 'estudiante' && req.user.id != id) {
+      return res.status(403).json({ message: 'No autorizado' });
     }
 
     const enrollments = await Enrollment.findAll({
-      where: { id_usuario },
+      where: { userId: id },
       include: [
         {
           model: Class,
           as: 'class',
           include: [
             { model: Subject, as: 'subject' },
-            { model: User, as: 'professor', attributes: ['name', 'email'] },
+            { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
           ],
         },
       ],
+      order: [['classId', 'ASC']],
     });
 
-    // Cabeceras de respuesta
+    const schedule = enrollments.map((enr) => {
+      const clase = enr.class;
+      const materia = clase?.subject;
+      const prof = clase?.teacher;
+
+      return {
+        enrollmentId: enr.id,
+        classId: clase?.id || null,
+        subject: materia
+          ? {
+              id: materia.id,
+              name: materia.name,
+              description: materia.description,
+            }
+          : null,
+        schedule: clase?.schedule || null,
+        room: clase?.room || null,
+        teacher: prof
+          ? {
+              id: prof.id,
+              name: prof.name,
+              email: prof.email,
+            }
+          : null,
+      };
+    });
+
+    console.log('Enrollments encontrados:', enrollments.length);
+
+    // Si no piden PDF => devolver JSON
+    if (format !== 'pdf') {
+      return res.json({
+        studentId: id,
+        count: schedule.length,
+        schedule,
+      });
+    }
+
+    // PDF
+    const doc = new PDFDocument({ margin: 50 });
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="horario_estudiante_${id_usuario}.pdf"`
+      `inline; filename=cronograma-estudiante-${id}.pdf`
     );
 
-    const doc = new PDFDocument();
     doc.pipe(res);
 
-    doc.fontSize(18).text('Horario del Estudiante', { align: 'center' });
+    doc.fontSize(18).text('Cronograma del estudiante', { align: 'center' });
     doc.moveDown();
 
-    enrollments.forEach((enr) => {
-      const c = enr.class;
-      doc
-        .fontSize(12)
-        .text(`Asignatura: ${c?.subject?.name || 'N/A'}`)
-        .text(`Profesor: ${c?.professor?.name || 'N/A'} (${c?.professor?.email || ''})`)
-        .text(`Horario: ${c?.horario || ''}`)
-        .text(`Salón: ${c?.salon || ''}`)
-        .moveDown();
-    });
+    if (schedule.length === 0) {
+      doc.fontSize(12).text('El estudiante no tiene inscripciones.');
+    } else {
+      schedule.forEach((item) => {
+        const materia = item.subject;
+        const prof = item.teacher;
+
+        doc.fontSize(12).text(`Materia: ${materia ? materia.name : 'N/A'}`);
+        doc.text(`Descripción: ${materia ? materia.description || '-' : '-'}`);
+        doc.text(`Horario: ${item.schedule || '-'}`);
+        doc.text(`Aula: ${item.room || '-'}`);
+        doc.text(
+          `Profesor: ${
+            prof ? `${prof.name} (${prof.email || 'sin email'})` : '(sin datos)'
+          }`
+        );
+        doc.moveDown();
+      });
+    }
 
     doc.end();
   } catch (err) {
-    console.error(err);
-    // OJO: no podés mandar JSON después de empezar el PDF, así que esto es por si falla antes
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'Error al generar PDF' });
-    }
+    console.error('ERROR AL GENERAR REPORTE:', err);
+    res.status(500).json({ message: 'Error al generar reporte' });
   }
 });
 

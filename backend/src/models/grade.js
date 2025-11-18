@@ -1,4 +1,6 @@
 // src/models/grade.js
+'use strict';
+
 module.exports = (sequelize, DataTypes) => {
   const Grade = sequelize.define(
     'Grade',
@@ -14,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       classId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: false, // clase
       },
       grade: {
         type: DataTypes.FLOAT,
@@ -30,6 +32,19 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
     }
   );
+
+  Grade.associate = (models) => {
+    // 👇 alias ÚNICO para el estudiante de la nota
+    Grade.belongsTo(models.User, {
+      foreignKey: 'userId',
+      as: 'gradeStudent',
+    });
+
+    Grade.belongsTo(models.Class, {
+      foreignKey: 'classId',
+      as: 'class',
+    });
+  };
 
   return Grade;
 };
