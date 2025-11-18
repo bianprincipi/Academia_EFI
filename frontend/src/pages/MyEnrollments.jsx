@@ -1,5 +1,6 @@
 // src/pages/MyEnrollments.jsx
 import { useEffect, useState } from 'react';
+<<<<<<< HEAD
 import {
   Paper,
   Typography,
@@ -15,6 +16,12 @@ import {
 import DownloadIcon from '@mui/icons-material/PictureAsPdf';
 import { useAuth } from '../auth.jsx';
 import { apiFetch } from '../services/api';
+=======
+import { Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button, Stack } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import { listByUser } from '../services/enrollments';
+import { pdfSchedule } from '../services/reports';
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
 
 // URL del backend (funciona con Vite + env)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';

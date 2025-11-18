@@ -1,73 +1,5 @@
-// import { BrowserRouter, Routes, Route } from 'react-router-dom';
-// import { AuthProvider } from './auth.jsx';
-
-// import Layout from './site/Layout.jsx';
-
-// // Sitio público
-// import Inicio from './site/pages/Inicio.jsx';
-// import Universidad from './site/pages/Universidad.jsx';
-// import Carreras from './site/pages/Carreras.jsx';
-// import Investigacion from './site/pages/Investigacion.jsx';
-// import Extension from './site/pages/Extension.jsx';
-// import Noticias from './site/pages/Noticias.jsx';
-// import Ingresantes from './site/pages/Ingresantes.jsx';
-// import Contacto from './site/pages/Contacto.jsx';
-
-// // Portal
-// import Portal from './pages/Portal.jsx';
-// import PortalHome from './pages/PortalHome.jsx';
-
-// // App académica
-// import PrivateRoute from './components/PrivateRoute.jsx';
-// import Subjects from './pages/Subjects.jsx';
-// import Classes from './pages/Classes.jsx';
-// import MyEnrollments from './pages/MyEnrollments.jsx';
-// import Forbidden from './pages/Forbidden.jsx';
-
-// function NotFound(){ return <div style={{padding:16}}>404 — Página no encontrada</div>; }
-
-// export default function App(){
-//   return (
-//     <AuthProvider>
-//       <BrowserRouter>
-//         <Routes>
-//           <Route path="/" element={<Layout/>}>
-//             {/* Públicas */}
-//             <Route index element={<Inicio/>} />
-//             <Route path="universidad" element={<Universidad/>} />
-//             <Route path="carreras" element={<Carreras/>} />
-//             <Route path="investigacion" element={<Investigacion/>} />
-//             <Route path="extension" element={<Extension/>} />
-//             <Route path="noticias" element={<Noticias/>} />
-//             <Route path="ingresantes" element={<Ingresantes/>} />
-//             <Route path="contacto" element={<Contacto/>} />
-
-//             {/* Portal */}
-//             <Route path="portal" element={<Portal/>} />
-//             <Route path="portal/home" element={<PortalHome/>} />
-
-//             {/* App */}
-//             <Route path="app/forbidden" element={<Forbidden/>} />
-//             <Route path="app/subjects" element={
-//               <PrivateRoute roles={['admin']}><Subjects/></PrivateRoute>
-//             } />
-//             <Route path="app/classes" element={
-//               <PrivateRoute roles={['admin','profesor','estudiante']}><Classes/></PrivateRoute>
-//             } />
-//             <Route path="app/my-enrollments" element={
-//               <PrivateRoute roles={['estudiante','admin']}><MyEnrollments/></PrivateRoute>
-//             } />
-
-//             {/* catch-all */}
-//             <Route path="*" element={<NotFound/>} />
-//           </Route>
-//         </Routes>
-//       </BrowserRouter>
-//     </AuthProvider>
-//   );
-// }
-import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
-import { AuthProvider } from "./auth.jsx";
+import { BrowserRouter, Routes, Route, Link, Outlet, useNavigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext"; // <-- Importado useAuth
 import {
   Box,
   AppBar,
@@ -77,6 +9,7 @@ import {
   Container,
   Grid,
 } from "@mui/material";
+import LogoutIcon from '@mui/icons-material/Logout'; // <-- Icono de Logout
 import { green, lightBlue, blueGrey } from "@mui/material/colors";
 import HomeIcon from "@mui/icons-material/Home";
 import EmailIcon from "@mui/icons-material/Email";
@@ -85,7 +18,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 // --- Logo principal ---
 import logoWalke from "./assets/walke_university.png";
 
-// --- Páginas ---
+// --- Páginas Públicas (Sitio) ---
 import Inicio from "./site/pages/Inicio.jsx";
 import Universidad from "./site/pages/Universidad.jsx";
 import Carreras from "./site/pages/Carreras.jsx";
@@ -94,16 +27,32 @@ import Extension from "./site/pages/Extension.jsx";
 import Noticias from "./site/pages/Noticias.jsx";
 import Ingresantes from "./site/pages/Ingresantes.jsx";
 import Contacto from "./site/pages/Contacto.jsx";
+<<<<<<< HEAD
 import Careers from './pages/Careers';
 import Portal from "./pages/Portal.jsx";
 import PortalHome from "./pages/PortalHome.jsx";
 import MySchedule from './pages/MySchedule';
+=======
 
+// --- Páginas de Portal/Autenticación ---
+import Portal from "./pages/Portal.jsx";
+import PortalHome from "./pages/PortalHome.jsx";
+import Login from "./pages/Login.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPassword.jsx";
+import ResetPasswordPage from "./pages/ResetPassword.jsx";
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
+
+// --- Componentes de Seguridad y Académicos Existentes ---
 import PrivateRoute from "./components/PrivateRoute.jsx";
-import Subjects from "./pages/Subjects.jsx";
 import Classes from "./pages/Classes.jsx";
 import MyEnrollments from "./pages/MyEnrollments.jsx";
 import Forbidden from "./pages/Forbidden.jsx";
+
+// --- COMPONENTES NUEVOS DEL MÓDULO ADMIN (Integración Final) ---
+import SubjectsPage from "./pages/admin/SubjectsPage.jsx";
+import DashboardAdmin from "./pages/admin/DashboardAdmin.jsx";
+
 
 function NotFound() {
   return (
@@ -118,8 +67,17 @@ function NotFound() {
   );
 }
 
-// --- Layout visual principal ---
+// --- Layout visual principal (Mantiene el Header/Footer) ---
 function SiteLayout() {
+  // Hooks para manejo de autenticación y navegación
+  const { user, logout } = useAuth(); // <-- Uso de useAuth
+  const navigate = useNavigate(); // <-- Uso de useNavigate
+
+  const handleLogout = () => {
+    logout(); // Llama a la función de logout del AuthContext
+    navigate('/login'); // Redirige al usuario a la página de login
+  };
+
   return (
     <Box
       sx={{
@@ -216,20 +174,50 @@ function SiteLayout() {
             >
               Universidad
             </Button>
-            <Button
-              component={Link}
-              to="/portal"
-              variant="contained"
-              sx={{
-                bgcolor: green[600],
-                color: "#fff",
-                borderRadius: "20px",
-                fontWeight: 600,
-                "&:hover": { bgcolor: green[800] },
-              }}
-            >
-              Portal
-            </Button>
+            
+            {/* --- LÓGICA DE BOTÓN CONDICIONAL (Portal vs. Usuario Logueado) --- */}
+            {user ? (
+                // Mostrar info de usuario y botón de Logout si está autenticado
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography 
+                        variant="subtitle1" 
+                        sx={{ color: green[800], fontWeight: 600, mr: 1, display: { xs: 'none', md: 'block' } }}
+                    >
+                        Hola, {user.name || user.email}
+                    </Typography>
+                    <Button
+                        onClick={handleLogout} // <-- Función de Logout
+                        variant="contained"
+                        startIcon={<LogoutIcon />}
+                        sx={{
+                            bgcolor: blueGrey[600],
+                            color: "#fff",
+                            borderRadius: "20px",
+                            fontWeight: 600,
+                            "&:hover": { bgcolor: blueGrey[800] },
+                        }}
+                    >
+                        Salir
+                    </Button>
+                </Box>
+            ) : (
+                // Mostrar botón de Portal/Login si no está autenticado
+                <Button
+                    component={Link}
+                    to="/login" // Redirige a login
+                    variant="contained"
+                    sx={{
+                        bgcolor: green[600],
+                        color: "#fff",
+                        borderRadius: "20px",
+                        fontWeight: 600,
+                        "&:hover": { bgcolor: green[800] },
+                    }}
+                >
+                    Portal
+                </Button>
+            )}
+            
           </Box>
         </Toolbar>
       </AppBar>
@@ -237,11 +225,12 @@ function SiteLayout() {
       {/* --- CONTENIDO PRINCIPAL --- */}
       <Box sx={{ flexGrow: 1, width: "100%", position: "relative", zIndex: 1, py: 4 }}>
         <Container maxWidth="lg">
+          {/* El contenido de la ruta anidada se renderiza aquí */}
           <Outlet />
         </Container>
       </Box>
 
-      {/* --- FOOTER --- */}
+      {/* --- FOOTER (El resto del código del Footer se omite por brevedad) --- */}
       <Box
         component="footer"
         sx={{
@@ -268,9 +257,8 @@ function SiteLayout() {
                 Comprometidos con la excelencia educativa y el desarrollo integral de nuestros estudiantes.
               </Typography>
             </Grid>
-
-            {/* Columna 2 */}
-            <Grid item xs={12} sm={6} md={4}>
+            {/* ... Resto del Footer ... */}
+             <Grid item xs={12} sm={6} md={4}>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: green[400] }}>
                 Enlaces Rápidos
               </Typography>
@@ -322,8 +310,16 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Rutas de Autenticación (fuera del Layout principal) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset/:token" element={<ResetPasswordPage />} />
+          <Route path="/forbidden" element={<Forbidden />} />
+
+          {/* Layout principal (todas las rutas anidadas debajo usarán SiteLayout) */}
           <Route path="/" element={<SiteLayout />}>
-            {/* --- Páginas públicas --- */}
+            {/* --- Páginas públicas del sitio web --- */}
             <Route index element={<Inicio />} />
             <Route path="universidad" element={<Universidad />} />
             
@@ -340,16 +336,31 @@ export default function App() {
             <Route path="portal" element={<Portal />} />
             <Route path="portal/home" element={<PortalHome />} />
 
-            {/* --- App académica --- */}
-            <Route path="app/forbidden" element={<Forbidden />} />
+            {/* -------------------------------------------------------------------------- */}
+            {/* --- APP ACADÉMICA Y ADMIN (INTEGRACIÓN) --- */}
+            {/* -------------------------------------------------------------------------- */}
+            
+            {/* 1. Dashboard Admin (protegido para roles con acceso al panel) */}
+            <Route
+              path="app/dashboard"
+              element={
+                <PrivateRoute roles={["admin", "profesor"]}>
+                  <DashboardAdmin /> 
+                </PrivateRoute>
+              }
+            />
+
+            {/* 2. Gestión de Asignaturas (protegido, típicamente solo para Admin) */}
             <Route
               path="app/subjects"
               element={
                 <PrivateRoute roles={["admin"]}>
-                  <Subjects />
+                  <SubjectsPage /> {/* Usamos el nuevo componente SubjectsPage */}
                 </PrivateRoute>
               }
             />
+
+            {/* Rutas académicas existentes */}
             <Route
               path="app/classes"
               element={
@@ -367,7 +378,7 @@ export default function App() {
               }
             />
 
-            {/* --- Página no encontrada --- */}
+            {/* Catch-all dentro del layout */}
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

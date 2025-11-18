@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // frontend/src/services/api.js
 import axios from "axios";
 
@@ -49,3 +50,37 @@ export async function apiFetch(path, { method = "GET", body } = {}) {
 
 export default api;
 
+=======
+import axios from 'axios';
+
+const api = axios.create({
+    baseURL: 'http://localhost:3001/api',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+});
+
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
+
+api.interceptors.response.use((response) => {
+    return response;
+}, (error) => {
+    if (error.response && error.response.status === 401 || error.response.status === 403) {
+        console.error('Sesion expirada o no autorizada. Redirigiendo al login...');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        window.location.href = '/login';
+    }
+    return Promise.reject(error);
+});
+
+export default api;
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/pages/Subjects.jsx
 import { useEffect, useState } from "react";
 import {
@@ -18,6 +19,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import { green } from "@mui/material/colors";
 import { apiFetch } from "../services/api";
+=======
+import { useEffect, useState } from 'react';
+import { Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, Stack, Button, TextField } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import { listSubjects, createSubject, removeSubject } from '../services/subjects';
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
 
 export default function Subjects() {
   const [subjects, setSubjects] = useState([]);

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/pages/PortalHome.jsx
 import { Typography, Stack, Button, Paper, Chip, Box } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,6 +10,11 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { green, blueGrey } from "@mui/material/colors";
+=======
+import { Typography, Stack, Button, Paper } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
 
 export default function PortalHome() {
   const { user, logout } = useAuth();

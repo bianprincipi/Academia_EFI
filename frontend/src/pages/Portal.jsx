@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/pages/Portal.jsx
 import { useState } from "react";
 import {
@@ -15,6 +16,29 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import api from "../services/api";
+=======
+// import { useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { useAuth } from '../context/AuthContext';
+// import Login from './Login.jsx';
+
+// export default function Portal(){
+//   const { user } = useAuth();
+//   const nav = useNavigate();
+
+//   useEffect(() => {
+//     if (user) nav('/portal/home', { replace: true });
+//   }, [user, nav]);
+
+//   if (!user) return <Login />;
+//   return null;
+// }
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Login from './Login.jsx';
+import { Box, Typography, CircularProgress, Fade, Paper } from '@mui/material';
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
 
 export default function Portal() {
   const { login } = useAuth();

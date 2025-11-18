@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/pages/Classes.jsx
 import { useEffect, useState } from "react";
 import {
@@ -14,6 +15,14 @@ import {
 } from "@mui/material";
 import { useAuth } from "../auth.jsx";
 import { apiFetch } from "../services/api";
+=======
+import { useEffect, useState } from 'react';
+import { Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button, Stack } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import { listClasses } from '../services/classes';
+import { enroll } from '../services/enrollments';
+import { pdfRoster } from '../services/reports';
+>>>>>>> ef762fb219b2ce7dca33f27864cd64ad708eb271
 
 export default function Classes() {
   const { user, token } = useAuth();
